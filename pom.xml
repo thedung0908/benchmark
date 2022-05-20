@@ -40,6 +40,7 @@
 		<module>package</module>
 		<module>docker</module>
 		<module>driver-kop</module>
+		<module>driver-azure-eventhubs</module>
 	</modules>
 
 
@@ -59,7 +60,7 @@
 	</properties>
 
 	<build>
-		<plugins>
+		<!-- <plugins>
 			<plugin>
 				<groupId>com.mycila</groupId>
 				<artifactId>license-maven-plugin</artifactId>
@@ -91,7 +92,7 @@
 					</execution>
 				</executions>
 			</plugin>
-		</plugins>
+		</plugins> -->
 	</build>
 
 	<dependencies>
