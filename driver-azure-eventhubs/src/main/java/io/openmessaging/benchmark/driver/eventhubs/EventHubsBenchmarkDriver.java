@@ -1,22 +1,19 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one or more contributor license
+ * agreements. See the NOTICE file distributed with this work for additional information regarding
+ * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the License. You may obtain a
+ * copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ * <p>http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ * <p>Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package io.openmessaging.benchmark.driver.eventhubs;
+
 
 import com.azure.core.management.AzureEnvironment;
 import com.azure.core.management.profile.AzureProfile;
@@ -25,42 +22,32 @@ import com.azure.identity.ClientSecretCredentialBuilder;
 import com.azure.messaging.eventhubs.*;
 import com.azure.messaging.eventhubs.checkpointstore.blob.BlobCheckpointStore;
 import com.azure.resourcemanager.eventhubs.EventHubsManager;
+import com.azure.resourcemanager.eventhubs.models.EventHub;
 import com.azure.storage.blob.BlobContainerAsyncClient;
 import com.azure.storage.blob.BlobContainerClientBuilder;
-
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.microsoft.azure.eventhubs.ConnectionStringBuilder;
-import com.microsoft.azure.eventhubs.EventData;
 import com.microsoft.azure.eventhubs.EventHubClient;
-import com.azure.resourcemanager.eventhubs.models.EventHub;
-
-import com.microsoft.azure.eventhubs.EventHubException;
 import io.openmessaging.benchmark.driver.BenchmarkConsumer;
 import io.openmessaging.benchmark.driver.BenchmarkDriver;
 import io.openmessaging.benchmark.driver.BenchmarkProducer;
 import io.openmessaging.benchmark.driver.ConsumerCallback;
-
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-
-
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
-import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class EventHubsBenchmarkDriver implements BenchmarkDriver {
 
     private static final Logger log = LoggerFactory.getLogger(EventHubsBenchmarkDriver.class);
-
 
     private String connectionString;
     private String clientId;
@@ -74,7 +61,6 @@ public class EventHubsBenchmarkDriver implements BenchmarkDriver {
     private String sasKey;
     private String resourceGroup;
 
-
     private String topicName;
     private String storageConnectionString;
     private String storageContainerName;
@@ -85,7 +71,6 @@ public class EventHubsBenchmarkDriver implements BenchmarkDriver {
     private List<BenchmarkProducer> producers = Collections.synchronizedList(new ArrayList<>());
     private List<BenchmarkConsumer> consumers = Collections.synchronizedList(new ArrayList<>());
     final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
-
 
     private Properties topicProperties;
     private Properties producerProperties;
@@ -101,7 +86,9 @@ public class EventHubsBenchmarkDriver implements BenchmarkDriver {
     AzureProfile sharedAzureProfile;
 
     @Override
-    public void initialize(File configurationFile, org.apache.bookkeeper.stats.StatsLogger statsLogger) throws IOException {
+    public void initialize(
+            File configurationFile, org.apache.bookkeeper.stats.StatsLogger statsLogger)
+            throws IOException {
         config = mapper.readValue(configurationFile, Config.class);
         Properties commonProperties = new Properties();
         commonProperties.load(new StringReader(config.commonConfig));
@@ -137,38 +124,39 @@ public class EventHubsBenchmarkDriver implements BenchmarkDriver {
 
         String checkpointBatchSizeStr = consumerProperties.getProperty("checkpoint.batch.size");
         if (checkpointBatchSizeStr != null) {
-            checkpointBatchSize = Integer.parseInt(consumerProperties.getProperty("checkpoint.batch.size"));
+            checkpointBatchSize =
+                    Integer.parseInt(consumerProperties.getProperty("checkpoint.batch.size"));
         }
 
         topicName = topicProperties.getProperty("topic.name.prefix");
         sharedTopic = topicProperties.getProperty("topic.name.shared");
 
         AzureProfile profile = new AzureProfile(tenantId, subscriptionId, AzureEnvironment.AZURE);
-        ClientSecretCredential clientSecretCredential = new ClientSecretCredentialBuilder()
-                .clientId(clientId)
-                .clientSecret(clientSecret)
-                .tenantId(tenantId)
-                .build();
-        eventHubsManager = EventHubsManager.configure()
-                .authenticate(clientSecretCredential, profile);
+        ClientSecretCredential clientSecretCredential =
+                new ClientSecretCredentialBuilder()
+                        .clientId(clientId)
+                        .clientSecret(clientSecret)
+                        .tenantId(tenantId)
+                        .build();
+        eventHubsManager = EventHubsManager.configure().authenticate(clientSecretCredential, profile);
 
         // Temp
         sharedCSC = clientSecretCredential;
         sharedAzureProfile = profile;
 
         // Checkpoint Store
-        blobContainerAsyncClient = new BlobContainerClientBuilder()
-                .connectionString(storageConnectionString)
-                .containerName(storageContainerName)
-                .buildAsyncClient();
+        blobContainerAsyncClient =
+                new BlobContainerClientBuilder()
+                        .connectionString(storageConnectionString)
+                        .containerName(storageContainerName)
+                        .buildAsyncClient();
 
         if (config.reset) {
-            for (EventHub eh : eventHubsManager.namespaces().eventHubs().listByNamespace(resourceGroup, namespace)) {
+            for (EventHub eh :
+                    eventHubsManager.namespaces().eventHubs().listByNamespace(resourceGroup, namespace)) {
                 eventHubsManager.namespaces().eventHubs().deleteByName(resourceGroup, namespace, eh.name());
             }
         }
-
-
     }
 
     @Override
@@ -183,26 +171,27 @@ public class EventHubsBenchmarkDriver implements BenchmarkDriver {
             sharedTopic = topic;
         }
 
-        EventHubsManager localManager = EventHubsManager.configure()
-                .authenticate(sharedCSC,sharedAzureProfile);
+        EventHubsManager localManager =
+                EventHubsManager.configure().authenticate(sharedCSC, sharedAzureProfile);
         System.out.println(" Topic Req: " + topic);
-        localManager.namespaces()
+        localManager
+                .namespaces()
                 .eventHubs()
                 .define(topic)
                 .withExistingNamespaceId(namespaceResourceId)
                 .withPartitionCount(partitions)
                 .create();
 
-        return CompletableFuture.runAsync(() -> {
-            System.out.println(" Topic Created: " + topic);
-
-        });
+        return CompletableFuture.runAsync(
+                () -> {
+                    System.out.println(" Topic Created: " + topic);
+                });
     }
 
-//    @Override
-//    public CompletableFuture<Void> notifyTopicCreation(String topic, int partitions) {
-//        return CompletableFuture.completedFuture(null);
-//    }
+    //    @Override
+    //    public CompletableFuture<Void> notifyTopicCreation(String topic, int partitions) {
+    //        return CompletableFuture.completedFuture(null);
+    //    }
 
     @Override
     public CompletableFuture<BenchmarkProducer> createProducer(String topic) {
@@ -211,16 +200,18 @@ public class EventHubsBenchmarkDriver implements BenchmarkDriver {
             sharedTopic = topic;
         }
 
-        final ConnectionStringBuilder connStr = new ConnectionStringBuilder()
-                .setNamespaceName(namespace)
-                .setEventHubName(topic)
-                .setSasKeyName(sasKeyName)
-                .setSasKey(sasKey);
+        final ConnectionStringBuilder connStr =
+                new ConnectionStringBuilder()
+                        .setNamespaceName(namespace)
+                        .setEventHubName(topic)
+                        .setSasKeyName(sasKeyName)
+                        .setSasKey(sasKey);
 
         EventHubClient ehClient = null;
         try {
             ehClient = EventHubClient.createSync(connStr.toString(), executorService);
-            BenchmarkProducer benchmarkProducer = new EventHubsBenchmarkProducer(ehClient, omgProducerBatchSize);
+            BenchmarkProducer benchmarkProducer =
+                    new EventHubsBenchmarkProducer(ehClient, omgProducerBatchSize);
             producers.add(benchmarkProducer);
 
             return CompletableFuture.completedFuture(benchmarkProducer);
@@ -233,30 +224,43 @@ public class EventHubsBenchmarkDriver implements BenchmarkDriver {
     }
 
     @Override
-    public CompletableFuture<BenchmarkConsumer> createConsumer(String topic, String subscriptionName, ConsumerCallback consumerCallback) {
+    public CompletableFuture<BenchmarkConsumer> createConsumer(
+            String topic, String subscriptionName, ConsumerCallback consumerCallback) {
         if (sharedTopic == null) {
             sharedTopic = topic;
         }
-        EventProcessorClientBuilder eventProcessorClientBuilder = new EventProcessorClientBuilder()
-                .connectionString(connectionString, topic)
-                .consumerGroup(EventHubClientBuilder.DEFAULT_CONSUMER_GROUP_NAME)
-                // .partitionOwnershipExpirationInterval(30)
+        EventProcessorClientBuilder eventProcessorClientBuilder =
+                new EventProcessorClientBuilder()
+                        .connectionString(connectionString, topic)
+                        .consumerGroup(EventHubClientBuilder.DEFAULT_CONSUMER_GROUP_NAME)
+                        // .partitionOwnershipExpirationInterval(30)
 
-                .processEvent(eventContext -> {
-                    consumerCallback.messageReceived(eventContext.getEventData().getBody(),
-                            TimeUnit.MILLISECONDS.toNanos(Long.parseLong(eventContext.getEventData().getProperties().get("producer_timestamp").toString())));
-                    if (eventContext.getEventData().getSequenceNumber() % checkpointBatchSize == 0) {
-                        CompletableFuture.runAsync(eventContext::updateCheckpoint);
-                    }
-                })
-                .processError(errorContext -> {
-                    log.error("exception occur while consuming message", errorContext);
-                })
-                .checkpointStore(new BlobCheckpointStore(blobContainerAsyncClient));
-        EventProcessorClient eventProcessorClient = eventProcessorClientBuilder.buildEventProcessorClient();
+                        .processEvent(
+                                eventContext -> {
+                                    consumerCallback.messageReceived(
+                                            eventContext.getEventData().getBody(),
+                                            TimeUnit.MILLISECONDS.toNanos(
+                                                    Long.parseLong(
+                                                            eventContext
+                                                                    .getEventData()
+                                                                    .getProperties()
+                                                                    .get("producer_timestamp")
+                                                                    .toString())));
+                                    if (eventContext.getEventData().getSequenceNumber() % checkpointBatchSize == 0) {
+                                        CompletableFuture.runAsync(eventContext::updateCheckpoint);
+                                    }
+                                })
+                        .processError(
+                                errorContext -> {
+                                    log.error("exception occur while consuming message", errorContext);
+                                })
+                        .checkpointStore(new BlobCheckpointStore(blobContainerAsyncClient));
+        EventProcessorClient eventProcessorClient =
+                eventProcessorClientBuilder.buildEventProcessorClient();
 
         try {
-            BenchmarkConsumer benchmarkConsumer = new EventHubsBenchmarkConsumer(eventProcessorClient, consumerCallback);
+            BenchmarkConsumer benchmarkConsumer =
+                    new EventHubsBenchmarkConsumer(eventProcessorClient, consumerCallback);
             consumers.add(benchmarkConsumer);
             return CompletableFuture.completedFuture(benchmarkConsumer);
         } catch (Throwable t) {
@@ -278,10 +282,9 @@ public class EventHubsBenchmarkDriver implements BenchmarkDriver {
             consumer.close();
         }
         executorService.shutdown();
-
     }
 
-
-    private static final ObjectMapper mapper = new ObjectMapper(new YAMLFactory())
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    private static final ObjectMapper mapper =
+            new ObjectMapper(new YAMLFactory())
+                    .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 }

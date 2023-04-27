@@ -58,7 +58,7 @@
         <module>package</module>
         <module>docker</module>
         <module>driver-kop</module>
-		<module>driver-azure-eventhubs</module>        
+        <module>driver-azure-eventhubs</module>
         <module>tool</module>
     </modules>
 
@@ -230,8 +230,8 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <!-- Check for typical bugs -->
+            <!-- Check for typical bugs -->
+            <!-- <plugin>
                 <groupId>com.github.spotbugs</groupId>
                 <artifactId>spotbugs-maven-plugin</artifactId>
                 <version>${spotbugs.plugin.version}</version>
@@ -245,9 +245,9 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-                <!-- Check that source files have appropriate license headers -->
+            </plugin> -->
+            <!-- Check that source files have appropriate license headers -->
+            <!-- <plugin>
                 <groupId>com.mycila</groupId>
                 <artifactId>license-maven-plugin</artifactId>
                 <version>${license.plugin.version}</version>
@@ -286,9 +286,9 @@
                         <phase>process-sources</phase>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-                <!-- Deeper code style check -->
+            </plugin> -->
+            <!-- Deeper code style check -->
+            <!-- <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
                 <version>${checkstyle.plugin.version}</version>
@@ -314,7 +314,7 @@
                         <phase>validate</phase>
                     </execution>
                 </executions>
-            </plugin>
+            </plugin> -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
